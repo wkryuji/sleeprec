@@ -98,6 +98,7 @@
   let selectedSymbol = '';
   let isDragging = false;
   let alreadyTouchedCells = new Set();
+  let isTouchMoveListenerAdded = false;
 
   document.addEventListener('mouseup', () => {
     isDragging = false;
@@ -117,8 +118,7 @@
 
   function applyStateToUpperCell(cell) {
     // 上段は常に sleep 状態として扱う（記号モードでも）
-    let s = parseInt(cell.dataset.state);
-    if (isNaN(s)) s = 0;
+    let s = parseInt(cell.dataset.state || '0');
     s = (s + 1) % 3;
     cell.dataset.state = s;
     if (s === 1) cell.className = 'cell upper sleep-deep';
@@ -316,34 +316,38 @@
       tbody.appendChild(lower);
     }
 
-    document.addEventListener('touchmove', (e) => {
-      if (!isDragging) return;
-      const touch = e.touches[0];
-      const target = document.elementFromPoint(touch.clientX, touch.clientY);
-      if (!target) return;
+    if (!isTouchMoveListenerAdded) {
+      document.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (!target) return;
 
-      const upperCell = target.closest('[data-cell-type="upper"]');
-      if (upperCell && !alreadyTouchedCells.has(upperCell.dataset.key)) {
-        const prevSymbol = selectedSymbol;
-        selectedSymbol = ''; // Temporarily disable symbol mode
-        applyStateToUpperCell(upperCell);
-        selectedSymbol = prevSymbol;
-        alreadyTouchedCells.add(upperCell.dataset.key);
-        e.preventDefault();
-        return;
-      }
-
-      const lowerCell = target.closest('[data-cell-type="lower"]');
-      if (lowerCell && !alreadyTouchedCells.has(lowerCell.dataset.key)) {
-        const spanArrow = lowerCell.querySelector('.arrow');
-        const spanSymbol = lowerCell.querySelector('.symbol');
-        if (spanArrow && spanSymbol) {
-          applyStateToLowerCell(lowerCell, spanArrow, spanSymbol);
-          alreadyTouchedCells.add(lowerCell.dataset.key);
+        const upperCell = target.closest('[data-cell-type="upper"]');
+        if (upperCell && !alreadyTouchedCells.has(upperCell.dataset.key)) {
+          const prevSymbol = selectedSymbol;
+          selectedSymbol = ''; // Temporarily disable symbol mode
+          applyStateToUpperCell(upperCell);
+          selectedSymbol = prevSymbol;
+          alreadyTouchedCells.add(upperCell.dataset.key);
           e.preventDefault();
+          return;
         }
-      }
-    }, { passive: false });
+
+        const lowerCell = target.closest('[data-cell-type="lower"]');
+        if (lowerCell && !alreadyTouchedCells.has(lowerCell.dataset.key)) {
+          const spanArrow = lowerCell.querySelector('.arrow');
+          const spanSymbol = lowerCell.querySelector('.symbol');
+          if (spanArrow && spanSymbol) {
+            applyStateToLowerCell(lowerCell, spanArrow, spanSymbol);
+            alreadyTouchedCells.add(lowerCell.dataset.key);
+            e.preventDefault();
+          }
+        }
+      }, { passive: false });
+
+      isTouchMoveListenerAdded = true;
+    }
   }
 
   function downloadPDF() {
