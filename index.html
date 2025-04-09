@@ -222,24 +222,25 @@
         u.className = 'cell upper';
         u.setAttribute('data-cell-type', 'upper');
         u.dataset.state = 0;
+        u.dataset.key = `${i}-upper-${h}`;
         u.addEventListener('mousedown', () => {
           isDragging = true;
-          if (!alreadyTouchedCells.has(u)) {
+          if (!alreadyTouchedCells.has(u.dataset.key)) {
             applyStateToUpperCell(u);
-            alreadyTouchedCells.add(u);
+            alreadyTouchedCells.add(u.dataset.key);
           }
         });
         u.addEventListener('mouseover', () => {
-          if (isDragging && !alreadyTouchedCells.has(u)) {
+          if (isDragging && !alreadyTouchedCells.has(u.dataset.key)) {
             applyStateToUpperCell(u);
-            alreadyTouchedCells.add(u);
+            alreadyTouchedCells.add(u.dataset.key);
           }
         });
         u.addEventListener('touchstart', (e) => {
           isDragging = true;
-          if (!alreadyTouchedCells.has(u)) {
+          if (!alreadyTouchedCells.has(u.dataset.key)) {
             applyStateToUpperCell(u);
-            alreadyTouchedCells.add(u);
+            alreadyTouchedCells.add(u.dataset.key);
           }
           e.preventDefault();
         });
@@ -247,9 +248,9 @@
           const touch = e.touches[0];
           const target = document.elementFromPoint(touch.clientX, touch.clientY);
           const td = target?.closest('td');
-          if (isDragging && td && td.classList.contains('upper') && !alreadyTouchedCells.has(td)) {
+          if (isDragging && td && td.classList.contains('upper') && !alreadyTouchedCells.has(td.dataset.key)) {
             applyStateToUpperCell(td);
-            alreadyTouchedCells.add(td);
+            alreadyTouchedCells.add(td.dataset.key);
           }
           e.preventDefault();
         });
@@ -267,24 +268,25 @@
         sym.className = 'symbol';
         l.appendChild(arrow);
         l.appendChild(sym);
+        l.dataset.key = `${i}-lower-${h}`;
         l.addEventListener('mousedown', () => {
           isDragging = true;
-          if (!alreadyTouchedCells.has(l)) {
+          if (!alreadyTouchedCells.has(l.dataset.key)) {
             applyStateToLowerCell(l, arrow, sym);
-            alreadyTouchedCells.add(l);
+            alreadyTouchedCells.add(l.dataset.key);
           }
         });
         l.addEventListener('mouseover', () => {
-          if (isDragging && !alreadyTouchedCells.has(l)) {
+          if (isDragging && !alreadyTouchedCells.has(l.dataset.key)) {
             applyStateToLowerCell(l, arrow, sym);
-            alreadyTouchedCells.add(l);
+            alreadyTouchedCells.add(l.dataset.key);
           }
         });
         l.addEventListener('touchstart', (e) => {
           isDragging = true;
-          if (!alreadyTouchedCells.has(l)) {
+          if (!alreadyTouchedCells.has(l.dataset.key)) {
             applyStateToLowerCell(l, arrow, sym);
-            alreadyTouchedCells.add(l);
+            alreadyTouchedCells.add(l.dataset.key);
           }
           e.preventDefault();
         });
@@ -292,12 +294,12 @@
           const touch = e.touches[0];
           const target = document.elementFromPoint(touch.clientX, touch.clientY);
           const td = target?.closest('td.cell.lower');
-          if (isDragging && td && !alreadyTouchedCells.has(td)) {
+          if (isDragging && td && !alreadyTouchedCells.has(td.dataset.key)) {
             const spanArrow = td.querySelector('.arrow');
             const spanSymbol = td.querySelector('.symbol');
             if (spanArrow && spanSymbol) {
               applyStateToLowerCell(td, spanArrow, spanSymbol);
-              alreadyTouchedCells.add(td);
+              alreadyTouchedCells.add(td.dataset.key);
             }
           }
           e.preventDefault();
@@ -321,20 +323,20 @@
       if (!target) return;
 
       const upperCell = target.closest('[data-cell-type="upper"]');
-      if (upperCell && !alreadyTouchedCells.has(upperCell)) {
+      if (upperCell && !alreadyTouchedCells.has(upperCell.dataset.key)) {
         applyStateToUpperCell(upperCell);
-        alreadyTouchedCells.add(upperCell);
+        alreadyTouchedCells.add(upperCell.dataset.key);
         e.preventDefault();
         return;
       }
 
       const lowerCell = target.closest('[data-cell-type="lower"]');
-      if (lowerCell && !alreadyTouchedCells.has(lowerCell)) {
+      if (lowerCell && !alreadyTouchedCells.has(lowerCell.dataset.key)) {
         const spanArrow = lowerCell.querySelector('.arrow');
         const spanSymbol = lowerCell.querySelector('.symbol');
         if (spanArrow && spanSymbol) {
           applyStateToLowerCell(lowerCell, spanArrow, spanSymbol);
-          alreadyTouchedCells.add(lowerCell);
+          alreadyTouchedCells.add(lowerCell.dataset.key);
           e.preventDefault();
         }
       }
