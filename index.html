@@ -213,6 +213,7 @@
       for (let h = 0; h < 24; h++) {
         const u = document.createElement('td');
         u.className = 'cell upper';
+        u.setAttribute('data-cell-type', 'upper');
         u.dataset.state = 0;
         u.addEventListener('mousedown', () => {
           isDragging = true;
@@ -242,6 +243,7 @@
 
         const l = document.createElement('td');
         l.className = 'cell lower';
+        l.setAttribute('data-cell-type', 'lower');
         const arrow = document.createElement('span');
         arrow.className = 'arrow';
         const sym = document.createElement('span');
@@ -284,6 +286,30 @@
       tbody.appendChild(upper);
       tbody.appendChild(lower);
     }
+
+    document.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      const touch = e.touches[0];
+      const target = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (!target) return;
+
+      const upperCell = target.closest('[data-cell-type="upper"]');
+      if (upperCell) {
+        applyStateToUpperCell(upperCell);
+        e.preventDefault();
+        return;
+      }
+
+      const lowerCell = target.closest('[data-cell-type="lower"]');
+      if (lowerCell) {
+        const spanArrow = lowerCell.querySelector('.arrow');
+        const spanSymbol = lowerCell.querySelector('.symbol');
+        if (spanArrow && spanSymbol) {
+          applyStateToLowerCell(lowerCell, spanArrow, spanSymbol);
+          e.preventDefault();
+        }
+      }
+    }, { passive: false });
   }
 
   function downloadPDF() {
