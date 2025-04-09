@@ -98,6 +98,17 @@
   let selectedSymbol = '';
   let isDragging = false;
 
+  function selectSymbol(symbol) {
+    selectedSymbol = symbol;
+    document.querySelectorAll('.palette button').forEach(button => {
+      button.classList.remove('selected-button');
+      const buttonSymbol = button.textContent.match(/[▽▲◎]/)?.[0] || '';
+      if (buttonSymbol === symbol || (!symbol && button.textContent.includes('（なし）'))) {
+        button.classList.add('selected-button');
+      }
+    });
+  }
+
   function applyStateToUpperCell(cell) {
     if (selectedSymbol) {
       cell.textContent = selectedSymbol;
@@ -209,6 +220,22 @@
         u.addEventListener('mouseover', () => {
           if (isDragging) applyStateToUpperCell(u);
         });
+        u.addEventListener('touchstart', (e) => {
+          isDragging = true;
+          applyStateToUpperCell(u);
+          e.preventDefault();
+        });
+        u.addEventListener('touchmove', (e) => {
+          const touch = e.touches[0];
+          const target = document.elementFromPoint(touch.clientX, touch.clientY);
+          if (isDragging && target && target.classList.contains('upper')) {
+            applyStateToUpperCell(target);
+          }
+          e.preventDefault();
+        });
+        u.addEventListener('touchend', () => {
+          isDragging = false;
+        });
         upper.appendChild(u);
 
         const l = document.createElement('td');
@@ -224,6 +251,27 @@
         });
         l.addEventListener('mouseover', () => {
           if (isDragging) applyStateToLowerCell(l, arrow, sym);
+        });
+        l.addEventListener('touchstart', (e) => {
+          isDragging = true;
+          applyStateToLowerCell(l, arrow, sym);
+          e.preventDefault();
+        });
+        l.addEventListener('touchmove', (e) => {
+          const touch = e.touches[0];
+          const target = document.elementFromPoint(touch.clientX, touch.clientY);
+          if (isDragging && target && target.classList.contains('symbol')) {
+            const parent = target.closest('td');
+            if (parent) {
+              const spanArrow = parent.querySelector('.arrow');
+              const spanSymbol = parent.querySelector('.symbol');
+              applyStateToLowerCell(parent, spanArrow, spanSymbol);
+            }
+          }
+          e.preventDefault();
+        });
+        l.addEventListener('touchend', () => {
+          isDragging = false;
         });
         lower.appendChild(l);
       }
