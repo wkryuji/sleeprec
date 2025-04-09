@@ -55,7 +55,7 @@
     期間：
     <select id="range-select">
       <option value="7">7日間</option>
-      <option value="14">14日間</option>
+      <option value="14" selected>14日間</option>
       <option value="28">28日間</option>
       <option value="month">1か月間</option>
     </select>
@@ -96,17 +96,45 @@
 
 <script>
   let selectedSymbol = '';
+  let isDragging = false;
 
-  function selectSymbol(symbol) {
-    selectedSymbol = symbol;
-    document.querySelectorAll('.palette button').forEach(button => {
-      button.classList.remove('selected-button');
-      const buttonSymbol = button.textContent.match(/[▽▲◎]/)?.[0] || '';
-      if (buttonSymbol === symbol || (!symbol && button.textContent === '（なし）')) {
-        button.classList.add('selected-button');
-      }
-    });
+  function applyStateToUpperCell(cell) {
+    if (selectedSymbol) {
+      cell.textContent = selectedSymbol;
+      cell.className = 'cell upper';
+    } else {
+      let s = parseInt(cell.dataset.state || '0');
+      s = (s + 1) % 3;
+      cell.dataset.state = s;
+      if (s === 1) cell.className = 'cell upper sleep-deep';
+      else if (s === 2) cell.className = 'cell upper sleep-light';
+      else cell.className = 'cell upper';
+      cell.textContent = '';
+    }
   }
+
+  function applyStateToLowerCell(cell, arrowSpan, symbolSpan) {
+    if (selectedSymbol) {
+      const currentSymbols = symbolSpan.textContent.split('');
+      if (currentSymbols.includes(selectedSymbol)) {
+        symbolSpan.textContent = currentSymbols.filter(s => s !== selectedSymbol).join('');
+      } else {
+        if (currentSymbols.length < 3) {
+          symbolSpan.textContent = currentSymbols.concat(selectedSymbol).join('');
+        } else {
+          currentSymbols.shift();
+          symbolSpan.textContent = currentSymbols.concat(selectedSymbol).join('');
+        }
+      }
+    } else {
+      arrowSpan.textContent = arrowSpan.textContent === '→' ? '' : '→';
+      cell.classList.toggle('arrow-shown');
+    }
+  }
+
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+  });
 
   function generateTable() {
     const startDateInput = document.getElementById('start-date').value;
@@ -118,11 +146,14 @@
     thead.innerHTML = '';
 
     const fixedHeaderRow = document.createElement('tr');
-    ['日', '眠気', '特記事項', ...Array.from({length: 24}, (_, i) => i)].forEach(text => {
+    fixedHeaderRow.appendChild(document.createElement('th')).textContent = '日';
+    for (let i = 0; i < 24; i++) {
       const th = document.createElement('th');
-      th.textContent = text;
+      th.textContent = i;
       fixedHeaderRow.appendChild(th);
-    });
+    }
+    fixedHeaderRow.appendChild(document.createElement('th')).textContent = '眠気';
+    fixedHeaderRow.appendChild(document.createElement('th')).textContent = '特記事項';
     thead.appendChild(fixedHeaderRow);
 
     const rangeSelect = document.getElementById('range-select').value;
@@ -151,6 +182,8 @@
       if (weekday === 0) dayCell.classList.add('highlight-sun');
       if (weekday === 6) dayCell.classList.add('highlight-sat');
 
+      upper.appendChild(dayCell);
+
       const moodCell = document.createElement('td');
       moodCell.rowSpan = 2;
       const moodInput = document.createElement('input');
@@ -166,26 +199,15 @@
       noteArea.style.resize = 'none';
       noteCell.appendChild(noteArea);
 
-      upper.appendChild(dayCell);
-      upper.appendChild(moodCell);
-      upper.appendChild(noteCell);
-
       for (let h = 0; h < 24; h++) {
         const u = document.createElement('td');
         u.dataset.state = 0;
-        u.addEventListener('click', () => {
-          if (selectedSymbol) {
-            u.textContent = selectedSymbol;
-            u.className = 'cell upper';
-          } else {
-            let s = parseInt(u.dataset.state || '0');
-            s = (s + 1) % 3;
-            u.dataset.state = s;
-            if (s === 1) u.className = 'cell upper sleep-deep';
-            else if (s === 2) u.className = 'cell upper sleep-light';
-            else u.className = 'cell upper';
-            u.textContent = '';
-          }
+        u.addEventListener('mousedown', () => {
+          isDragging = true;
+          applyStateToUpperCell(u);
+        });
+        u.addEventListener('mouseover', () => {
+          if (isDragging) applyStateToUpperCell(u);
         });
         upper.appendChild(u);
 
@@ -196,27 +218,18 @@
         sym.className = 'symbol';
         l.appendChild(arrow);
         l.appendChild(sym);
-        l.addEventListener('click', () => {
-          if (selectedSymbol) {
-            const currentSymbols = sym.textContent.split('');
-            if (currentSymbols.includes(selectedSymbol)) {
-              sym.textContent = currentSymbols.filter(s => s !== selectedSymbol).join('');
-            } else {
-              if (currentSymbols.length < 3) {
-                sym.textContent = currentSymbols.concat(selectedSymbol).join('');
-              } else {
-                currentSymbols.shift();
-                sym.textContent = currentSymbols.concat(selectedSymbol).join('');
-              }
-            }
-          } else {
-            arrow.textContent = arrow.textContent === '→' ? '' : '→';
-            l.classList.toggle('arrow-shown');
-          }
+        l.addEventListener('mousedown', () => {
+          isDragging = true;
+          applyStateToLowerCell(l, arrow, sym);
+        });
+        l.addEventListener('mouseover', () => {
+          if (isDragging) applyStateToLowerCell(l, arrow, sym);
         });
         lower.appendChild(l);
       }
 
+      upper.appendChild(moodCell);
+      upper.appendChild(noteCell);
       tbody.appendChild(upper);
       tbody.appendChild(lower);
     }
@@ -235,7 +248,7 @@
       doc.addImage(imgData, "PNG", x, y, canvas.width * ratio, canvas.height * ratio);
       doc.save("suimin.pdf");
     });
-  }ß
+  }
 
   window.onload = () => {
     const startDateInput = document.getElementById('start-date');
@@ -246,8 +259,14 @@
       const dd = String(today.getDate()).padStart(2, '0');
       const localDate = `${yyyy}-${mm}-${dd}`;
       startDateInput.value = localDate;
+
+      // Delay generateTable to ensure value is set
+      setTimeout(() => {
+        generateTable();
+      }, 0);
+    } else {
+      generateTable();
     }
-    generateTable();
   };
 </script>
 </body>
