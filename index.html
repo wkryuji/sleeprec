@@ -98,6 +98,7 @@
   let selectedSymbol = '';
   let isDragging = false;
   let alreadyTouchedCells = new Set();
+  let lastTouchId = null;
   let isTouchMoveListenerAdded = false;
 
   document.addEventListener('mouseup', () => {
@@ -320,6 +321,10 @@
       document.addEventListener('touchmove', (e) => {
         if (!isDragging) return;
         const touch = e.touches[0];
+        if (lastTouchId !== touch.identifier) {
+          lastTouchId = touch.identifier;
+          alreadyTouchedCells.clear();
+        }
         const target = document.elementFromPoint(touch.clientX, touch.clientY);
         if (!target) return;
 
