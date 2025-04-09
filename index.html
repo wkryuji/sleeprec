@@ -212,6 +212,7 @@
 
       for (let h = 0; h < 24; h++) {
         const u = document.createElement('td');
+        u.className = 'cell upper';
         u.dataset.state = 0;
         u.addEventListener('mousedown', () => {
           isDragging = true;
@@ -228,8 +229,9 @@
         u.addEventListener('touchmove', (e) => {
           const touch = e.touches[0];
           const target = document.elementFromPoint(touch.clientX, touch.clientY);
-          if (isDragging && target && target.classList.contains('upper')) {
-            applyStateToUpperCell(target);
+          const td = target?.closest('td');
+          if (isDragging && td && td.classList.contains('upper')) {
+            applyStateToUpperCell(td);
           }
           e.preventDefault();
         });
@@ -239,6 +241,7 @@
         upper.appendChild(u);
 
         const l = document.createElement('td');
+        l.className = 'cell lower';
         const arrow = document.createElement('span');
         arrow.className = 'arrow';
         const sym = document.createElement('span');
@@ -260,12 +263,12 @@
         l.addEventListener('touchmove', (e) => {
           const touch = e.touches[0];
           const target = document.elementFromPoint(touch.clientX, touch.clientY);
-          if (isDragging && target && target.classList.contains('symbol')) {
-            const parent = target.closest('td');
-            if (parent) {
-              const spanArrow = parent.querySelector('.arrow');
-              const spanSymbol = parent.querySelector('.symbol');
-              applyStateToLowerCell(parent, spanArrow, spanSymbol);
+          const td = target?.closest('td.cell.lower');
+          if (isDragging && td) {
+            const spanArrow = td.querySelector('.arrow');
+            const spanSymbol = td.querySelector('.symbol');
+            if (spanArrow && spanSymbol) {
+              applyStateToLowerCell(td, spanArrow, spanSymbol);
             }
           }
           e.preventDefault();
