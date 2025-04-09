@@ -117,7 +117,8 @@
 
   function applyStateToUpperCell(cell) {
     // 上段は常に sleep 状態として扱う（記号モードでも）
-    let s = parseInt(cell.dataset.state || '0');
+    let s = parseInt(cell.dataset.state);
+    if (isNaN(s)) s = 0;
     s = (s + 1) % 3;
     cell.dataset.state = s;
     if (s === 1) cell.className = 'cell upper sleep-deep';
