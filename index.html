@@ -245,7 +245,10 @@
           const target = document.elementFromPoint(touch.clientX, touch.clientY);
           const td = target?.closest('td');
           if (isDragging && td && td.classList.contains('upper') && !alreadyTouchedCells.has(td.dataset.key)) {
+            const prevSymbol = selectedSymbol;
+            selectedSymbol = ''; // Temporarily disable symbol mode
             applyStateToUpperCell(td);
+            selectedSymbol = prevSymbol;
             alreadyTouchedCells.add(td.dataset.key);
           }
           e.preventDefault();
@@ -320,7 +323,10 @@
 
       const upperCell = target.closest('[data-cell-type="upper"]');
       if (upperCell && !alreadyTouchedCells.has(upperCell.dataset.key)) {
+        const prevSymbol = selectedSymbol;
+        selectedSymbol = ''; // Temporarily disable symbol mode
         applyStateToUpperCell(upperCell);
+        selectedSymbol = prevSymbol;
         alreadyTouchedCells.add(upperCell.dataset.key);
         e.preventDefault();
         return;
