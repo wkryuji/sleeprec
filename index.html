@@ -1,22 +1,21 @@
-@ -0,0 +1,209 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>すいみん記録帳</title>
+  <meta charset="UTF-8">
+  <title>すいみん記録帳（モバイル対応版）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     body { font-family: sans-serif; padding: 1em; margin: 0; background: white; }
     .container { width: 100%; margin: 0 auto; }
-    .scroll-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .scroll-container { overflow-x: auto; display: flex; justify-content: center; }
     table { border-collapse: collapse; margin-top: 1em; min-width: 900px; }
     th, td {
       border: 1px solid #999; text-align: center; width: 28px; height: 28px;
       font-size: 0.75em; position: relative;
     }
-    textarea { resize: none; font-size: 0.8em; }
+    textarea { resize: none; font-size: 1em; }
     .arrow-shown { background-color: #add8e6; }
     .sleep-light { background-color: #ccc; }
     .sleep-deep { background-color: black; color: white; }
@@ -42,12 +41,17 @@
     .highlight-sat { color: blue; }
     .bottom-border td { border-bottom: 2px solid #333 !important; }
     input, select, button { font-size: 0.9em; }
+    .selected-button {
+      background-color: #007bff;
+      color: white;
+      border: 1px solid #0056b3;
+    }
   </style>
 </head>
 <body>
 <div class="container">
   <div class="controls">
-    開始日：<input type="date" id="start-date" value="2025-04-01">
+    開始日：<input type="date" id="start-date" onchange="generateTable()">
     期間：
     <select id="range-select" onchange="generateTable()">
       <option value="7">7日間</option>
@@ -55,6 +59,7 @@
       <option value="28">28日間</option>
       <option value="month">1か月間</option>
     </select>
+    <button onclick="generateTable()">確定</button>
   </div>
 
   <h2 style="text-align: center;">すいみん記録帳</h2>
@@ -71,8 +76,7 @@
 
   <div class="palette">
     <span>選択中の記号:</span>
-    <button onclick="selectSymbol('')">（なし）</button>
-    <button onclick="selectSymbol('→')">寝床にいた</button>
+    <button class="selected-button" onclick="selectSymbol('')">（なし）</button>
     <button onclick="selectSymbol('▽')">▽（トイレ）</button>
     <button onclick="selectSymbol('▲')">▲（睡眠薬）</button>
     <button onclick="selectSymbol('◎')">◎（薬）</button>
@@ -84,9 +88,8 @@
 
   <div class="scroll-container">
     <table id="sleepTable">
-      <thead><tr><th>日</th><th>眠気</th><th>特記事項</th>""" + \
-      ''.join(f"<th>{h}</th>" for h in range(24)) + \
-      """</tr></thead><tbody id="tableBody"></tbody>
+      <thead><tr><th>日</th><th>眠気</th><th>特記事項</th></tr></thead>
+      <tbody id="tableBody"></tbody>
     </table>
   </div>
 </div>
@@ -96,12 +99,32 @@
 
   function selectSymbol(symbol) {
     selectedSymbol = symbol;
+    document.querySelectorAll('.palette button').forEach(button => {
+      button.classList.remove('selected-button');
+      const buttonSymbol = button.textContent.match(/[▽▲◎]/)?.[0] || '';
+      if (buttonSymbol === symbol || (!symbol && button.textContent === '（なし）')) {
+        button.classList.add('selected-button');
+      }
+    });
   }
 
   function generateTable() {
+    const startDateInput = document.getElementById('start-date').value;
+    const start = new Date(startDateInput);
     const tbody = document.getElementById('tableBody');
+    const thead = document.querySelector('#sleepTable thead');
+
     tbody.innerHTML = '';
-    const start = new Date(document.getElementById('start-date').value);
+    thead.innerHTML = '';
+
+    const fixedHeaderRow = document.createElement('tr');
+    ['日', '眠気', '特記事項', ...Array.from({length: 24}, (_, i) => i)].forEach(text => {
+      const th = document.createElement('th');
+      th.textContent = text;
+      fixedHeaderRow.appendChild(th);
+    });
+    thead.appendChild(fixedHeaderRow);
+
     const rangeSelect = document.getElementById('range-select').value;
     let range = 7;
     if (rangeSelect === 'month') {
@@ -111,7 +134,7 @@
       range = parseInt(rangeSelect);
     }
 
-    const weekdays = ['日','月','火','水','木','金','土'];
+    const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
     for (let i = 0; i < range; i++) {
       const date = new Date(start);
       date.setDate(start.getDate() + i);
@@ -175,7 +198,17 @@
         l.appendChild(sym);
         l.addEventListener('click', () => {
           if (selectedSymbol) {
-            sym.textContent = sym.textContent === selectedSymbol ? '' : selectedSymbol;
+            const currentSymbols = sym.textContent.split('');
+            if (currentSymbols.includes(selectedSymbol)) {
+              sym.textContent = currentSymbols.filter(s => s !== selectedSymbol).join('');
+            } else {
+              if (currentSymbols.length < 3) {
+                sym.textContent = currentSymbols.concat(selectedSymbol).join('');
+              } else {
+                currentSymbols.shift();
+                sym.textContent = currentSymbols.concat(selectedSymbol).join('');
+              }
+            }
           } else {
             arrow.textContent = arrow.textContent === '→' ? '' : '→';
             l.classList.toggle('arrow-shown');
@@ -184,8 +217,8 @@
         lower.appendChild(l);
       }
 
-      document.getElementById("tableBody").appendChild(upper);
-      document.getElementById("tableBody").appendChild(lower);
+      tbody.appendChild(upper);
+      tbody.appendChild(lower);
     }
   }
 
@@ -204,7 +237,15 @@
     });
   }
 
-  window.onload = generateTable;
+  window.onload = () => {
+    const startDateInput = document.getElementById('start-date');
+    if (!startDateInput.value) {
+      const today = new Date();
+      const todayString = today.toISOString().split('T')[0];
+      startDateInput.value = todayString;
+    }
+    generateTable();
+  };
 </script>
 </body>
 </html>
