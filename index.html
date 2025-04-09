@@ -97,6 +97,12 @@
 <script>
   let selectedSymbol = '';
   let isDragging = false;
+  let alreadyTouchedCells = new Set();
+
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+    alreadyTouchedCells.clear();
+  });
 
   function selectSymbol(symbol) {
     selectedSymbol = symbol;
@@ -145,6 +151,7 @@
 
   document.addEventListener('mouseup', () => {
     isDragging = false;
+    alreadyTouchedCells.clear();
   });
 
   function generateTable() {
@@ -217,22 +224,32 @@
         u.dataset.state = 0;
         u.addEventListener('mousedown', () => {
           isDragging = true;
-          applyStateToUpperCell(u);
+          if (!alreadyTouchedCells.has(u)) {
+            applyStateToUpperCell(u);
+            alreadyTouchedCells.add(u);
+          }
         });
         u.addEventListener('mouseover', () => {
-          if (isDragging) applyStateToUpperCell(u);
+          if (isDragging && !alreadyTouchedCells.has(u)) {
+            applyStateToUpperCell(u);
+            alreadyTouchedCells.add(u);
+          }
         });
         u.addEventListener('touchstart', (e) => {
           isDragging = true;
-          applyStateToUpperCell(u);
+          if (!alreadyTouchedCells.has(u)) {
+            applyStateToUpperCell(u);
+            alreadyTouchedCells.add(u);
+          }
           e.preventDefault();
         });
         u.addEventListener('touchmove', (e) => {
           const touch = e.touches[0];
           const target = document.elementFromPoint(touch.clientX, touch.clientY);
           const td = target?.closest('td');
-          if (isDragging && td && td.classList.contains('upper')) {
+          if (isDragging && td && td.classList.contains('upper') && !alreadyTouchedCells.has(td)) {
             applyStateToUpperCell(td);
+            alreadyTouchedCells.add(td);
           }
           e.preventDefault();
         });
@@ -252,25 +269,35 @@
         l.appendChild(sym);
         l.addEventListener('mousedown', () => {
           isDragging = true;
-          applyStateToLowerCell(l, arrow, sym);
+          if (!alreadyTouchedCells.has(l)) {
+            applyStateToLowerCell(l, arrow, sym);
+            alreadyTouchedCells.add(l);
+          }
         });
         l.addEventListener('mouseover', () => {
-          if (isDragging) applyStateToLowerCell(l, arrow, sym);
+          if (isDragging && !alreadyTouchedCells.has(l)) {
+            applyStateToLowerCell(l, arrow, sym);
+            alreadyTouchedCells.add(l);
+          }
         });
         l.addEventListener('touchstart', (e) => {
           isDragging = true;
-          applyStateToLowerCell(l, arrow, sym);
+          if (!alreadyTouchedCells.has(l)) {
+            applyStateToLowerCell(l, arrow, sym);
+            alreadyTouchedCells.add(l);
+          }
           e.preventDefault();
         });
         l.addEventListener('touchmove', (e) => {
           const touch = e.touches[0];
           const target = document.elementFromPoint(touch.clientX, touch.clientY);
           const td = target?.closest('td.cell.lower');
-          if (isDragging && td) {
+          if (isDragging && td && !alreadyTouchedCells.has(td)) {
             const spanArrow = td.querySelector('.arrow');
             const spanSymbol = td.querySelector('.symbol');
             if (spanArrow && spanSymbol) {
               applyStateToLowerCell(td, spanArrow, spanSymbol);
+              alreadyTouchedCells.add(td);
             }
           }
           e.preventDefault();
@@ -294,18 +321,20 @@
       if (!target) return;
 
       const upperCell = target.closest('[data-cell-type="upper"]');
-      if (upperCell) {
+      if (upperCell && !alreadyTouchedCells.has(upperCell)) {
         applyStateToUpperCell(upperCell);
+        alreadyTouchedCells.add(upperCell);
         e.preventDefault();
         return;
       }
 
       const lowerCell = target.closest('[data-cell-type="lower"]');
-      if (lowerCell) {
+      if (lowerCell && !alreadyTouchedCells.has(lowerCell)) {
         const spanArrow = lowerCell.querySelector('.arrow');
         const spanSymbol = lowerCell.querySelector('.symbol');
         if (spanArrow && spanSymbol) {
           applyStateToLowerCell(lowerCell, spanArrow, spanSymbol);
+          alreadyTouchedCells.add(lowerCell);
           e.preventDefault();
         }
       }
