@@ -106,6 +106,20 @@
     alreadyTouchedCells.clear();
   });
 
+  document.addEventListener('touchstart', (e) => {
+    isDragging = true;
+    alreadyTouchedCells.clear();
+    lastTouchId = e.touches[0].identifier;
+  }, { passive: true });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      isDragging = false;
+      alreadyTouchedCells.clear();
+      lastTouchId = null;
+    }
+  });
+
   function selectSymbol(symbol) {
     selectedSymbol = symbol;
     document.querySelectorAll('.palette button').forEach(button => {
