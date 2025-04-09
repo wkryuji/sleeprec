@@ -1,0 +1,210 @@
+@ -0,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>すいみん記録帳</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 1em; margin: 0; background: white; }
+    .container { width: 100%; margin: 0 auto; }
+    .scroll-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { border-collapse: collapse; margin-top: 1em; min-width: 900px; }
+    th, td {
+      border: 1px solid #999; text-align: center; width: 28px; height: 28px;
+      font-size: 0.75em; position: relative;
+    }
+    textarea { resize: none; font-size: 0.8em; }
+    .arrow-shown { background-color: #add8e6; }
+    .sleep-light { background-color: #ccc; }
+    .sleep-deep { background-color: black; color: white; }
+    .symbol { position: absolute; top: 2px; left: 0; right: 0; font-size: 0.66em; text-align: center; }
+    .arrow { position: absolute; bottom: 2px; left: 0; right: 0; text-align: center; font-size: 1.1em; color: #00a; opacity: 0.6; }
+    .legend, .palette, .pdf-button, .controls {
+      margin: 1em 0; font-size: 0.9em;
+      display: flex; flex-wrap: wrap; gap: 0.5em; justify-content: center;
+    }
+    .legend-cell {
+      width: 20px; height: 20px; border: 1px solid #999;
+      position: relative; display: inline-block;
+    }
+    .legend-cell.sleep-deep { background-color: black; }
+    .legend-cell.sleep-light { background-color: #ccc; }
+    .legend-cell.arrow-shown { background-color: #add8e6; }
+    .legend-cell .arrow, .legend-cell .symbol {
+      position: absolute; left: 0; right: 0; text-align: center; font-size: 0.7em;
+    }
+    .legend-cell .arrow { bottom: 1px; color: #00a; }
+    .legend-cell .symbol { top: 1px; }
+    .highlight-sun { color: red; }
+    .highlight-sat { color: blue; }
+    .bottom-border td { border-bottom: 2px solid #333 !important; }
+    input, select, button { font-size: 0.9em; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="controls">
+    開始日：<input type="date" id="start-date" value="2025-04-01">
+    期間：
+    <select id="range-select" onchange="generateTable()">
+      <option value="7">7日間</option>
+      <option value="14">14日間</option>
+      <option value="28">28日間</option>
+      <option value="month">1か月間</option>
+    </select>
+  </div>
+
+  <h2 style="text-align: center;">すいみん記録帳</h2>
+
+  <div class="legend">
+    <div class="legend-cell sleep-deep"></div>ぐっすり眠った
+    <div class="legend-cell sleep-light"></div>うとうと
+    <div class="legend-cell"></div>ねむれないまま
+    <div class="legend-cell arrow-shown"><span class="arrow">→</span></div>寝床にいた
+    <div class="legend-cell"><span class="symbol">▽</span></div>トイレ（夜間）
+    <div class="legend-cell"><span class="symbol">▲</span></div>睡眠薬
+    <div class="legend-cell"><span class="symbol">◎</span></div>薬
+  </div>
+
+  <div class="palette">
+    <span>選択中の記号:</span>
+    <button onclick="selectSymbol('')">（なし）</button>
+    <button onclick="selectSymbol('→')">寝床にいた</button>
+    <button onclick="selectSymbol('▽')">▽（トイレ）</button>
+    <button onclick="selectSymbol('▲')">▲（睡眠薬）</button>
+    <button onclick="selectSymbol('◎')">◎（薬）</button>
+  </div>
+
+  <div class="pdf-button">
+    <button onclick="downloadPDF()">PDFとして保存</button>
+  </div>
+
+  <div class="scroll-container">
+    <table id="sleepTable">
+      <thead><tr><th>日</th><th>眠気</th><th>特記事項</th>""" + \
+      ''.join(f"<th>{h}</th>" for h in range(24)) + \
+      """</tr></thead><tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  let selectedSymbol = '';
+
+  function selectSymbol(symbol) {
+    selectedSymbol = symbol;
+  }
+
+  function generateTable() {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    const start = new Date(document.getElementById('start-date').value);
+    const rangeSelect = document.getElementById('range-select').value;
+    let range = 7;
+    if (rangeSelect === 'month') {
+      const y = start.getFullYear(), m = start.getMonth();
+      range = new Date(y, m + 1, 0).getDate() - start.getDate() + 1;
+    } else {
+      range = parseInt(rangeSelect);
+    }
+
+    const weekdays = ['日','月','火','水','木','金','土'];
+    for (let i = 0; i < range; i++) {
+      const date = new Date(start);
+      date.setDate(start.getDate() + i);
+      const weekday = date.getDay();
+      const label = `${date.getDate()}日（${weekdays[weekday]}）`;
+
+      const upper = document.createElement('tr');
+      const lower = document.createElement('tr');
+      lower.classList.add('bottom-border');
+
+      const dayCell = document.createElement('td');
+      dayCell.rowSpan = 2;
+      dayCell.textContent = label;
+      if (weekday === 0) dayCell.classList.add('highlight-sun');
+      if (weekday === 6) dayCell.classList.add('highlight-sat');
+
+      const moodCell = document.createElement('td');
+      moodCell.rowSpan = 2;
+      const moodInput = document.createElement('input');
+      moodInput.type = 'number';
+      moodInput.style.width = '40px';
+      moodCell.appendChild(moodInput);
+
+      const noteCell = document.createElement('td');
+      noteCell.rowSpan = 2;
+      const noteArea = document.createElement('textarea');
+      noteArea.rows = 3;
+      noteArea.style.width = '160px';
+      noteArea.style.resize = 'none';
+      noteCell.appendChild(noteArea);
+
+      upper.appendChild(dayCell);
+      upper.appendChild(moodCell);
+      upper.appendChild(noteCell);
+
+      for (let h = 0; h < 24; h++) {
+        const u = document.createElement('td');
+        u.dataset.state = 0;
+        u.addEventListener('click', () => {
+          if (selectedSymbol) {
+            u.textContent = selectedSymbol;
+            u.className = 'cell upper';
+          } else {
+            let s = parseInt(u.dataset.state || '0');
+            s = (s + 1) % 3;
+            u.dataset.state = s;
+            if (s === 1) u.className = 'cell upper sleep-deep';
+            else if (s === 2) u.className = 'cell upper sleep-light';
+            else u.className = 'cell upper';
+            u.textContent = '';
+          }
+        });
+        upper.appendChild(u);
+
+        const l = document.createElement('td');
+        const arrow = document.createElement('span');
+        arrow.className = 'arrow';
+        const sym = document.createElement('span');
+        sym.className = 'symbol';
+        l.appendChild(arrow);
+        l.appendChild(sym);
+        l.addEventListener('click', () => {
+          if (selectedSymbol) {
+            sym.textContent = sym.textContent === selectedSymbol ? '' : selectedSymbol;
+          } else {
+            arrow.textContent = arrow.textContent === '→' ? '' : '→';
+            l.classList.toggle('arrow-shown');
+          }
+        });
+        lower.appendChild(l);
+      }
+
+      document.getElementById("tableBody").appendChild(upper);
+      document.getElementById("tableBody").appendChild(lower);
+    }
+  }
+
+  function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    html2canvas(document.querySelector(".container")).then(canvas => {
+      const imgData = canvas.toDataURL("image/png");
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const ratio = Math.min(pageWidth / canvas.width, pageHeight / canvas.height);
+      const x = (pageWidth - canvas.width * ratio) / 2;
+      const y = 20;
+      doc.addImage(imgData, "PNG", x, y, canvas.width * ratio, canvas.height * ratio);
+      doc.save("suimin.pdf");
+    });
+  }
+
+  window.onload = generateTable;
+</script>
+</body>
+</html>
