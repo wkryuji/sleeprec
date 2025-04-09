@@ -250,10 +250,8 @@
         });
         u.addEventListener('touchstart', (e) => {
           isDragging = true;
-          if (!alreadyTouchedCells.has(u.dataset.key)) {
-            applyStateToUpperCell(u);
-            alreadyTouchedCells.add(u.dataset.key);
-          }
+          applyStateToUpperCell(u);
+          alreadyTouchedCells.add(u.dataset.key);
           e.preventDefault();
         });
         u.addEventListener('touchmove', (e) => {
@@ -286,10 +284,8 @@
         l.dataset.key = `${i}-lower-${h}`;
         l.addEventListener('mousedown', () => {
           isDragging = true;
-          if (!alreadyTouchedCells.has(l.dataset.key)) {
-            applyStateToLowerCell(l, arrow, sym);
-            alreadyTouchedCells.add(l.dataset.key);
-          }
+          applyStateToLowerCell(l, arrow, sym);
+          alreadyTouchedCells.add(l.dataset.key);
         });
         l.addEventListener('mouseover', () => {
           if (isDragging && !alreadyTouchedCells.has(l.dataset.key)) {
@@ -299,10 +295,8 @@
         });
         l.addEventListener('touchstart', (e) => {
           isDragging = true;
-          if (!alreadyTouchedCells.has(l.dataset.key)) {
-            applyStateToLowerCell(l, arrow, sym);
-            alreadyTouchedCells.add(l.dataset.key);
-          }
+          applyStateToLowerCell(l, arrow, sym);
+          alreadyTouchedCells.add(l.dataset.key);
           e.preventDefault();
         });
         l.addEventListener('touchmove', (e) => {
