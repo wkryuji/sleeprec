@@ -252,13 +252,13 @@
           }
         });
         u.addEventListener('touchstart', (e) => {
-          initialTouchHandled = true;
           if (!alreadyTouchedCells.has(u.dataset.key)) {
             isDragging = true;
             applyStateToUpperCell(u);
             alreadyTouchedCells.add(u.dataset.key);
           }
-          lastTouchedCellKey = u.dataset.key; // 追加
+          lastTouchedCellKey = u.dataset.key;
+          initialTouchHandled = true;
           e.preventDefault();
         });
         u.addEventListener('touchmove', (e) => {
@@ -266,7 +266,8 @@
           const touch = e.touches[0];
           const target = document.elementFromPoint(touch.clientX, touch.clientY);
           const td = target?.closest('td');
-          if (isDragging && td && td.classList.contains('upper') && !alreadyTouchedCells.has(td.dataset.key)) {
+          if (!td || alreadyTouchedCells.has(td.dataset.key)) return;
+          if (isDragging && td.classList.contains('upper')) {
             if (td.dataset.key === lastTouchedCellKey) {
               return;
             }
@@ -282,6 +283,7 @@
           isDragging = false;
           lastTouchedCellKey = null;
           initialTouchHandled = false;
+          alreadyTouchedCells.clear();
         });
         upper.appendChild(u);
 
@@ -331,6 +333,7 @@
         l.addEventListener('touchend', () => {
           isDragging = false;
           lastTouchedCellKey = null;
+          alreadyTouchedCells.clear();
         });
         lower.appendChild(l);
       }
