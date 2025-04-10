@@ -451,13 +451,29 @@
       // Delay generateTable to ensure value is set
       setTimeout(() => {
         generateTable();
+
+        // スクロール位置を左端にする（iPhone対応）
         const scroller = document.querySelector('.scroll-container');
-        if (scroller) scroller.scrollLeft = 0;
+        if (scroller) {
+          setTimeout(() => {
+            requestAnimationFrame(() => {
+              scroller.scrollLeft = 0;
+            });
+          }, 50); // iOS Safariの描画タイミングにあわせて遅延
+        }
       }, 0);
     } else {
       generateTable();
+
+      // スクロール位置を左端にする（iPhone対応）
       const scroller = document.querySelector('.scroll-container');
-      if (scroller) scroller.scrollLeft = 0;
+      if (scroller) {
+        setTimeout(() => {
+          requestAnimationFrame(() => {
+            scroller.scrollLeft = 0;
+          });
+        }, 50);
+      }
     }
   };
 </script>
