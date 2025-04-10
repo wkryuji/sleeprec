@@ -263,8 +263,11 @@
           const touch = e.touches[0];
           const target = document.elementFromPoint(touch.clientX, touch.clientY);
           const td = target?.closest('td');
-          if (isDragging && td && td.classList.contains('upper') && !alreadyTouchedCells.has(td.dataset.key)) {
-            if (td.dataset.key === lastTouchedCellKey) return; // 追加
+        if (isDragging && td && td.classList.contains('upper') && !alreadyTouchedCells.has(td.dataset.key)) {
+            if (td.dataset.key === lastTouchedCellKey) {
+              lastTouchedCellKey = null; // 1回だけスキップしたら無効化
+              return;
+            }
             const prevSymbol = selectedSymbol;
             selectedSymbol = ''; // Temporarily disable symbol mode
             applyStateToUpperCell(td);
@@ -275,6 +278,7 @@
         });
         u.addEventListener('touchend', () => {
           isDragging = false;
+          lastTouchedCellKey = null;
         });
         upper.appendChild(u);
 
@@ -323,6 +327,7 @@
         });
         l.addEventListener('touchend', () => {
           isDragging = false;
+          lastTouchedCellKey = null;
         });
         lower.appendChild(l);
       }
