@@ -9,7 +9,12 @@
   <style>
     body { font-family: sans-serif; padding: 1em; margin: 0; background: white; }
     .container { width: 100%; margin: 0 auto; }
-    .scroll-container { overflow-x: auto; display: flex; justify-content: center; }
+    .scroll-container { overflow-x: auto; display: block; }
+    .scroll-inner {
+      display: flex;
+      justify-content: center;
+      min-width: 1000px; /* 必要に応じて調整可 */
+    }
     table { border-collapse: collapse; margin-top: 1em; min-width: 900px; }
     th, td {
       border: 1px solid #999; text-align: center; width: 28px; height: 28px;
@@ -48,11 +53,6 @@
     }
     .highlight-row {
       background-color: #ffffcc !important; /* うす黄色で目立たせる */
-    }
-    .scroll-inner {
-      display: flex;
-      justify-content: center;
-      min-width: 1000px; /* 必要に応じて調整可 */
     }
   </style>
 </head>
