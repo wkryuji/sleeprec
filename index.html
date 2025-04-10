@@ -101,6 +101,7 @@
   let lastTouchId = null;
   let lastTouchedCellKey = null; // 追加
   let isTouchMoveListenerAdded = false;
+  let initialTouchHandled = false;
 
   document.addEventListener('mouseup', () => {
     isDragging = false;
@@ -251,6 +252,7 @@
           }
         });
         u.addEventListener('touchstart', (e) => {
+          initialTouchHandled = true;
           if (!alreadyTouchedCells.has(u.dataset.key)) {
             isDragging = true;
             applyStateToUpperCell(u);
@@ -260,12 +262,12 @@
           e.preventDefault();
         });
         u.addEventListener('touchmove', (e) => {
+          if (!initialTouchHandled) return;
           const touch = e.touches[0];
           const target = document.elementFromPoint(touch.clientX, touch.clientY);
           const td = target?.closest('td');
-        if (isDragging && td && td.classList.contains('upper') && !alreadyTouchedCells.has(td.dataset.key)) {
+          if (isDragging && td && td.classList.contains('upper') && !alreadyTouchedCells.has(td.dataset.key)) {
             if (td.dataset.key === lastTouchedCellKey) {
-              lastTouchedCellKey = null; // 1回だけスキップしたら無効化
               return;
             }
             const prevSymbol = selectedSymbol;
@@ -279,6 +281,7 @@
         u.addEventListener('touchend', () => {
           isDragging = false;
           lastTouchedCellKey = null;
+          initialTouchHandled = false;
         });
         upper.appendChild(u);
 
