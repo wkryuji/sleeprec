@@ -46,6 +46,9 @@
       color: white;
       border: 1px solid #0056b3;
     }
+    .highlight-row {
+      background-color: #ffffcc !important; /* うす黄色で目立たせる */
+    }
   </style>
 </head>
 <body>
@@ -102,6 +105,7 @@
   let lastTouchedCellKey = null; // 追加
   let isTouchMoveListenerAdded = false;
   let initialTouchHandled = false;
+  let activeDayIndex = null;
 
   document.addEventListener('mouseup', () => {
     isDragging = false;
@@ -212,6 +216,36 @@
       const dayCell = document.createElement('td');
       dayCell.rowSpan = 2;
       dayCell.textContent = label;
+      dayCell.addEventListener('click', () => {
+        const allRows = document.querySelectorAll('#tableBody tr');
+
+        if (activeDayIndex === i) {
+          // 同じ日を再クリック → 全体アクティブ
+          allRows.forEach(row => {
+            row.style.opacity = '1';
+            row.style.pointerEvents = 'auto';
+            row.classList.remove('highlight-row');
+          });
+          activeDayIndex = null;
+        } else {
+          // 新しい日クリック → その日だけ操作可
+          allRows.forEach((row, rIdx) => {
+            const isTarget = Math.floor(rIdx / 2) === i;
+            row.style.opacity = isTarget ? '1' : '0.2';
+            row.style.pointerEvents = isTarget ? 'auto' : 'none';
+            const dateCell = row.querySelector('td');
+            if (dateCell) {
+              dateCell.style.pointerEvents = 'auto'; // ← 日付セルは常に操作可能
+            }
+            if (isTarget) {
+              row.classList.add('highlight-row');
+            } else {
+              row.classList.remove('highlight-row');
+            }
+          });
+          activeDayIndex = i;
+        }
+      });
       if (weekday === 0) dayCell.classList.add('highlight-sun');
       if (weekday === 6) dayCell.classList.add('highlight-sat');
 
@@ -410,9 +444,13 @@
       // Delay generateTable to ensure value is set
       setTimeout(() => {
         generateTable();
+        const scroller = document.querySelector('.scroll-container');
+        if (scroller) scroller.scrollLeft = 0;
       }, 0);
     } else {
       generateTable();
+      const scroller = document.querySelector('.scroll-container');
+      if (scroller) scroller.scrollLeft = 0;
     }
   };
 </script>
