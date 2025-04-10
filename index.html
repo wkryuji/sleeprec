@@ -249,9 +249,11 @@
           }
         });
         u.addEventListener('touchstart', (e) => {
-          isDragging = true;
-          applyStateToUpperCell(u);
-          alreadyTouchedCells.add(u.dataset.key);
+          if (!alreadyTouchedCells.has(u.dataset.key)) {
+            isDragging = true;
+            applyStateToUpperCell(u);
+            alreadyTouchedCells.add(u.dataset.key);
+          }
           e.preventDefault();
         });
         u.addEventListener('touchmove', (e) => {
@@ -294,9 +296,11 @@
           }
         });
         l.addEventListener('touchstart', (e) => {
-          isDragging = true;
-          applyStateToLowerCell(l, arrow, sym);
-          alreadyTouchedCells.add(l.dataset.key);
+          if (!alreadyTouchedCells.has(l.dataset.key)) {
+            isDragging = true;
+            applyStateToLowerCell(l, arrow, sym);
+            alreadyTouchedCells.add(l.dataset.key);
+          }
           e.preventDefault();
         });
         l.addEventListener('touchmove', (e) => {
