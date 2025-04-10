@@ -49,6 +49,11 @@
     .highlight-row {
       background-color: #ffffcc !important; /* うす黄色で目立たせる */
     }
+    .scroll-inner {
+      display: flex;
+      justify-content: center;
+      min-width: 1000px; /* 必要に応じて調整可 */
+    }
   </style>
 </head>
 <body>
@@ -90,10 +95,12 @@
   </div>
 
   <div class="scroll-container">
-    <table id="sleepTable">
-      <thead><tr><th>日</th><th>眠気</th><th>特記事項</th></tr></thead>
-      <tbody id="tableBody"></tbody>
-    </table>
+    <div class="scroll-inner">
+      <table id="sleepTable">
+        <thead><tr><th>日</th><th>眠気</th><th>特記事項</th></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
