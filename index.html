@@ -99,6 +99,7 @@
   let isDragging = false;
   let alreadyTouchedCells = new Set();
   let lastTouchId = null;
+  let lastTouchedCellKey = null; // 追加
   let isTouchMoveListenerAdded = false;
 
   document.addEventListener('mouseup', () => {
@@ -110,6 +111,7 @@
     isDragging = true;
     alreadyTouchedCells.clear();
     lastTouchId = e.touches[0].identifier;
+    lastTouchedCellKey = e.touches[0].target.closest('td')?.dataset.key; // 追加
   }, { passive: true });
 
   document.addEventListener('visibilitychange', () => {
@@ -254,6 +256,7 @@
             applyStateToUpperCell(u);
             alreadyTouchedCells.add(u.dataset.key);
           }
+          lastTouchedCellKey = u.dataset.key; // 追加
           e.preventDefault();
         });
         u.addEventListener('touchmove', (e) => {
@@ -261,6 +264,7 @@
           const target = document.elementFromPoint(touch.clientX, touch.clientY);
           const td = target?.closest('td');
           if (isDragging && td && td.classList.contains('upper') && !alreadyTouchedCells.has(td.dataset.key)) {
+            if (td.dataset.key === lastTouchedCellKey) return; // 追加
             const prevSymbol = selectedSymbol;
             selectedSymbol = ''; // Temporarily disable symbol mode
             applyStateToUpperCell(td);
